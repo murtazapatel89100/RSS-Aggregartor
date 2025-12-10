@@ -50,7 +50,11 @@ func main() {
 	v1router.Get("/health", handler.HandlerReadiness)
 	v1router.Get("/error", handler.HandlerError)
 	v1router.Post("/users/create", config.HandlerCreateUser)
-	v1router.Get("/users/fetch", config.HandlerGetUser)
+	v1router.Post("/feeds/fetch", config.HandlerGetFeeds)
+
+	v1router.With(config.MiddlewareAuth).Get("/users/fetch", config.HandlerGetUser)
+	v1router.With(config.MiddlewareAuth).Post("/feeds/create", config.HandlerCreateFeed)
+	v1router.With(config.MiddlewareAuth).Post("/feeds-follow/create", config.HandlerCreateFeedFollow)
 
 	router.Mount("/v1", v1router)
 

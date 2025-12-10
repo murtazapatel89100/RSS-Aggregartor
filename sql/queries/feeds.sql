@@ -4,3 +4,7 @@ INSERT INTO
 VALUES
     ($1, NOW (), NOW (), $2, $3, $4)
 RETURNING *;
+
+-- name: GetFeeds :many
+SELECT * FROM
+    feeds;

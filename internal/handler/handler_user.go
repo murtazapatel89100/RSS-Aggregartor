@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/murtazapatel89100/RSS-Aggregartor/internal/auth"
 	"github.com/murtazapatel89100/RSS-Aggregartor/internal/database"
 )
 
@@ -38,15 +37,9 @@ func (config ApiConfig) HandlerCreateUser(w http.ResponseWriter, r *http.Request
 }
 
 func (config ApiConfig) HandlerGetUser(w http.ResponseWriter, r *http.Request) {
-	apikey, err := auth.GetApiKey(r.Header)
-	if err != nil {
-		RespondWithError(w, 403, fmt.Sprintf("Authentication error: %v", err))
-		return
-	}
-
-	user, err := config.DB.GetUserByApiKey(r.Context(), apikey)
-	if err != nil {
-		RespondWithError(w, 500, fmt.Sprintf("Failed to get user: %v", err))
+	user, ok := GetUserFromContext(r)
+	if !ok {
+		RespondWithError(w, 403, "User not found in context")
 		return
 	}
 
