@@ -6,12 +6,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
 	"github.com/murtazapatel89100/RSS-Aggregartor/internal/database"
 	"github.com/murtazapatel89100/RSS-Aggregartor/internal/handler"
+	"github.com/murtazapatel89100/RSS-Aggregartor/rss"
 
 	_ "github.com/lib/pq"
 )
@@ -35,6 +37,12 @@ func main() {
 
 	config := handler.ApiConfig{DB: database.New(conection)}
 
+	go func() {
+		time.Sleep(10 * time.Second)
+		log.Println("Starting RSS feed scraper...")
+		rss.ScrapeFeeds(config.DB, 10, 60*time.Second)
+	}()
+
 	router := chi.NewRouter()
 
 	router.Use(cors.Handler((cors.Options{
@@ -55,6 +63,9 @@ func main() {
 	v1router.With(config.MiddlewareAuth).Get("/users/fetch", config.HandlerGetUser)
 	v1router.With(config.MiddlewareAuth).Post("/feeds/create", config.HandlerCreateFeed)
 	v1router.With(config.MiddlewareAuth).Post("/feeds-follow/create", config.HandlerCreateFeedFollow)
+	v1router.With(config.MiddlewareAuth).Get("/feeds-follow/fetch", config.HandlerGetFeedFollow)
+	v1router.With(config.MiddlewareAuth).Delete("/feeds-follow/delete/{feedFollowID}", config.HandlerDeleteFeedFollow)
+	v1router.With(config.MiddlewareAuth).Get("/feeds-follow/user", config.HandlerGetUserFeeds)
 
 	router.Mount("/v1", v1router)
 

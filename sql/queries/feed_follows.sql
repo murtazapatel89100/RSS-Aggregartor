@@ -4,3 +4,15 @@ INSERT INTO
 VALUES
     ($1, NOW (), NOW (), $2, $3)
 RETURNING *;
+
+-- name: GetFeedFollow :many
+SELECT * FROM
+    feeds_follow
+WHERE
+    user_id = $1;
+
+-- name: DeleteFeedFollow :exec
+DELETE FROM
+    feeds_follow
+WHERE
+    user_id = $1 AND feed_id = $2;

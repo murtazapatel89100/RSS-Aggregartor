@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 	"github.com/murtazapatel89100/RSS-Aggregartor/internal/database"
 )
@@ -84,4 +85,45 @@ func (config ApiConfig) HandlerCreateFeedFollow(w http.ResponseWriter, r *http.R
 	}
 
 	RespondWithJSON(w, 201, feedFollow)
+}
+
+func (config ApiConfig) HandlerGetFeedFollow(w http.ResponseWriter, r *http.Request) {
+	user, ok := GetUserFromContext(r)
+	if !ok {
+		RespondWithError(w, 403, "User not found in context")
+		return
+	}
+	feedFollows, err := config.DB.GetFeedFollow(r.Context(), user.ID)
+	if err != nil {
+		RespondWithError(w, 500, fmt.Sprintf("Failed to get feed follows: %v", err))
+		return
+	}
+
+	RespondWithJSON(w, 200, feedFollows)
+}
+
+func (config ApiConfig) HandlerDeleteFeedFollow(w http.ResponseWriter, r *http.Request) {
+	feedFollowIDstr := chi.URLParam(r, "feedFollowID")
+	feedFollowID, err := uuid.Parse(feedFollowIDstr)
+	if err != nil {
+		RespondWithError(w, 400, fmt.Sprintf("Invalid feed follow ID: %v", err))
+		return
+	}
+
+	user, ok := GetUserFromContext(r)
+	if !ok {
+		RespondWithError(w, 403, "User not found in context")
+		return
+	}
+
+	err = config.DB.DeleteFeedFollow(r.Context(), database.DeleteFeedFollowParams{
+		UserID: user.ID,
+		FeedID: feedFollowID,
+	})
+	if err != nil {
+		RespondWithError(w, 500, fmt.Sprintf("Failed to delete feed follow: %v", err))
+		return
+	}
+
+	RespondWithJSON(w, 200, map[string]string{"status": "deleted"})
 }

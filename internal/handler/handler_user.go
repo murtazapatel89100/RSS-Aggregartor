@@ -45,3 +45,28 @@ func (config ApiConfig) HandlerGetUser(w http.ResponseWriter, r *http.Request) {
 
 	RespondWithJSON(w, 200, user)
 }
+
+func (config ApiConfig) HandlerGetUserFeeds(w http.ResponseWriter, r *http.Request) {
+	user, ok := GetUserFromContext(r)
+	if !ok {
+		RespondWithError(w, 403, "User not found in context")
+		return
+	}
+
+	posts, err := config.DB.GetPostForUser(r.Context(), database.GetPostForUserParams{
+		UserID: user.ID,
+		Limit:  int32(10),
+		Offset: int32(0),
+	})
+	if err != nil {
+		RespondWithError(w, 500, fmt.Sprintf("Failed to get user posts: %v", err))
+		return
+	}
+
+	// Return empty array instead of null if no posts found
+	if posts == nil {
+		posts = []database.Post{}
+	}
+
+	RespondWithJSON(w, 200, posts)
+}
